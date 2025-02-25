@@ -116,10 +116,10 @@ export class Person {
     }
 
     watch() {
-        var w = this.getObjectByRow(this.col + 1, this.row);
-        var e = this.getObjectByRow(this.col - 1, this.row);
-        var n = this.getObjectByRow(this.col, this.row + 1);
-        var s = this.getObjectByRow(this.col, this.row - 1);
+        var w = this.getObjectByRow2(this.col + 1, this.row);
+        var e = this.getObjectByRow2(this.col - 1, this.row);
+        var n = this.getObjectByRow2(this.col, this.row + 1);
+        var s = this.getObjectByRow2(this.col, this.row - 1);
         return [w, e, n, s];
     }
 
@@ -153,6 +153,21 @@ export class Person {
         }
     }
 
+    getObjectByRow2(col: number, row: number) {
+        //座標にPersonがあるかを確認する
+        for (var j = 0; j < Main.persons.length; j++) {
+            if (Main.persons[j].col == col && Main.persons[j].row == row) {
+                return 1;
+            }
+        }
+        //座標にItemgあるかを確認する
+        for (var j = 0; j < Item.items.length; j++) {
+            if (Item.items[j].col == col + 1 && Item.items[j].row == row) {
+                return 2;
+            }
+        }
+    }
+
     setMethod(o: Person | Item.Item | undefined): boolean {
         if (o == undefined) {
             return false;
@@ -168,37 +183,54 @@ export class Person {
         return false;
     }
 
-    async thinkAndAct(scene: Scene) {
+    async thinkAndAct() {
         var eye = this.watch();
+        if (this.type == 1) {
+            //console.log(eye);
+        }
+
         if (Main.LLM_FLAG == 1) {
             var d = await Agent.getNPCAction("[1,1,1,1,1]");
-            this.act(d, scene);
+            this.act(d);
         } else {
-            var d2 = Main.getRand(1, 4);
+
+            //eyeをもとにどちらに進むか決める
+
             var ds: string = "n";
-            if (d2 == 1) {
-                ds = "n";
-            } else if (d2 == 2) {
-                ds = "s";
-            } else if (d2 == 3) {
+            if (eye[0]) {
                 ds = "w";
-            } else if (d2 == 4) {
+            } else if (eye[1]) {
                 ds = "e";
+            } else if (eye[2]) {
+                ds = "n";
+            } else if (eye[3]) {
+                ds = "s";
+            } else {
+                var d2 = Main.getRand(1, 4);
+                if (d2 == 1) {
+                    ds = "n";
+                } else if (d2 == 2) {
+                    ds = "s";
+                } else if (d2 == 3) {
+                    ds = "w";
+                } else if (d2 == 4) {
+                    ds = "e";
+                }
             }
-            this.act(ds, scene);
+            this.act(ds);
         }
     }
 
-    act(ds: string, scene: Scene) {
+    act(ds: string) {
         //方向に何があるのかを検知する
         var d2 = this.watchDirection(ds);
 
         //方向にPersonやItemがあった場合は動かずにアクションをする
         if (this.setMethod(d2) == true) {
 
-        } else if (this.isCreateObject == true && Score.TREE_AMOUNT >= 100) {
+            //} else if (this.isCreateObject == true && Score.TREE_AMOUNT >= 100) {
             //建築する
-            this.build(scene, this.col, this.row);
+            //this.build(scene, this.col, this.row);
         } else {
             //方向に動く
             this.walk();
@@ -339,7 +371,7 @@ export function createNPC(scene: Scene, type: number) {
             var mesh = newMeshes[0];
             mesh.name = "aaa";
             Main.meshArray.push(mesh);
-            var r = Main.getRand(1, 999);
+            //var r = Main.getRand(1, 999);
             mesh.name = "ssssssssss";
             mesh.metadata = "sssss";
             //mesh.metadata.name = "NPC:" + r;

@@ -1,16 +1,16 @@
 import "./style.css";
 
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera.js";
-import { FreeCamera } from "@babylonjs/core/Cameras/freeCamera.js";
+//import { FreeCamera } from "@babylonjs/core/Cameras/freeCamera.js";
 import { Color3 } from "@babylonjs/core/Maths/math.color.js";
 import { Engine } from "@babylonjs/core/Engines/engine.js";
 //import { EnvironmentHelper } from "@babylonjs/core/Helpers/environmentHelper.js";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight.js";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
-import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder.js";
+//import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder.js";
 //import { MeshLoader } from "@babylonjs/core/Meshes/MeshLoader.js";
 //import { _OcclusionDataStorage, AbstractMesh, SceneLoader, Axis, Space } from "@babylonjs/core";
-import { _OcclusionDataStorage, AbstractMesh, GPUPicker, PointerEventTypes } from "@babylonjs/core";
+import { _OcclusionDataStorage, AbstractMesh, PointerEventTypes } from "@babylonjs/core";
 
 import { Scene } from "@babylonjs/core/scene.js";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial.js";
@@ -41,17 +41,21 @@ import * as Score from './score.ts';
 
 export var LLM_FLAG = 0;
 export var MAP_SIZE = 30;
-export var NPC_COUNT = 3;
-export var ENEMY_COUNT = 5;
-export var ITEM_COUNT = 0;
+export var NPC_COUNT = 5;
+export var ENEMY_COUNT = 10;
+export var ITEM_COUNT = 20;
 export var MAP_ARRAY: any[] = [];
 export var meshArray: { dispose: () => void; }[] | AbstractMesh[] = [];
+export var combinedBoxArray: Mesh[] = [];
 
 export var chipArray: {
-  mesh: any;
   bid: number;
-  type: number; col: number; row: number; h: number;
+  type: number;
+  col: number;
+  row: number;
+  h: number;
 }[] = [];
+
 export var persons: NPC.Person[] = [];
 export var FirstTargetNums: any[] = [];
 export var spheres = [];
@@ -146,7 +150,7 @@ const main = async () => {
 
       //if (stepId == persons[j].tickId) {
       //特定のtickの時だけ呼び出す
-      persons[j].thinkAndAct(scene);
+      persons[j].thinkAndAct();
       // }
       if (persons[j].hp < 0) {
         persons[j].remove();
@@ -167,7 +171,6 @@ const main = async () => {
     hogeId++;
     //if (stepId > 30) {
     //stepId = 0;
-    Map.growMap(scene);
     Score.setPopulation(humanCount);
     Score.setAnimalCount(enemyCount);
     var text = Score.getScoreText();
@@ -192,14 +195,18 @@ export function orgFloor(value: number, base: number) {
 }
 
 var mapid = 1;
+
+
+
 function resetMap(scene: Scene) {
   for (var i = 0; i < meshArray.length; i++) {
     meshArray[i].dispose();
   }
-  for (var i = 0; i < chipArray.length; i++) {
-    chipArray[i].mesh.dispose();
+  for (var i = 0; i < combinedBoxArray.length; i++) {
+    scene.removeMesh(combinedBoxArray[i]);
   }
   meshArray = [];
+  combinedBoxArray = [];
   persons = [];
   Item.resetItem();
   chipArray = [];
