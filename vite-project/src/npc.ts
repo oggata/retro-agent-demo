@@ -31,6 +31,7 @@ export class Person {
     isCreateObject: boolean;
     isPickObject: boolean;
     speed: number;
+
     constructor(id: number, col: number, row: number, type: number) {
         this.id = id;
         this.hashid = Main.getRand(1, 9999);
@@ -115,35 +116,36 @@ export class Person {
     }
 
     watch() {
-        var w = this.getObject(this.col + 1, this.row);
-        var e = this.getObject(this.col - 1, this.row);
-        var n = this.getObject(this.col, this.row + 1);
-        var s = this.getObject(this.col, this.row - 1);
+        var w = this.getObjectByRow(this.col + 1, this.row);
+        var e = this.getObjectByRow(this.col - 1, this.row);
+        var n = this.getObjectByRow(this.col, this.row + 1);
+        var s = this.getObjectByRow(this.col, this.row - 1);
         return [w, e, n, s];
     }
 
     watchDirection(d: string) {
         if (d == "w") {
-            return this.getObject(this.col + 1, this.row);
+            return this.getObjectByRow(this.col + 1, this.row);
         }
         if (d == "e") {
-            return this.getObject(this.col - 1, this.row);
+            return this.getObjectByRow(this.col - 1, this.row);
         }
         if (d == "n") {
-            return this.getObject(this.col, this.row + 1);
+            return this.getObjectByRow(this.col, this.row + 1);
         }
         if (d == "s") {
-            return this.getObject(this.col, this.row - 1);
+            return this.getObjectByRow(this.col, this.row - 1);
         }
     }
 
-    getObject(col: number, row: number) {
-        //自分の上下左右に何があるのかを確認する
+    getObjectByRow(col: number, row: number) {
+        //座標にPersonがあるかを確認する
         for (var j = 0; j < Main.persons.length; j++) {
             if (Main.persons[j].col == col && Main.persons[j].row == row) {
                 return Main.persons[j];
             }
         }
+        //座標にItemgあるかを確認する
         for (var j = 0; j < Item.items.length; j++) {
             if (Item.items[j].col == col + 1 && Item.items[j].row == row) {
                 return Item.items[j];
@@ -166,72 +168,41 @@ export class Person {
         return false;
     }
 
-    thinkAndAct(scene: Scene) {
-        /*
+    async thinkAndAct(scene: Scene) {
         var eye = this.watch();
-        //上下左右のどれかに対応する
-        var isAction = false;
-        for (var i = 0; i < 4; i++) {
-            if (this.setMethod(eye[i]) == true) {
-                //console.log("aa");
-                isAction = true;
+        if (Main.LLM_FLAG == 1) {
+            var d = await Agent.getNPCAction("[1,1,1,1,1]");
+            this.act(d, scene);
+        } else {
+            var d2 = Main.getRand(1, 4);
+            var ds: string = "n";
+            if (d2 == 1) {
+                ds = "n";
+            } else if (d2 == 2) {
+                ds = "s";
+            } else if (d2 == 3) {
+                ds = "w";
+            } else if (d2 == 4) {
+                ds = "e";
             }
+            this.act(ds, scene);
         }
-        if (this.isCreateObject == true && Score.TREE_AMOUNT >= 100) {
-            this.build(scene, this.col, this.row);
-            //console.log("bb");
-            isAction = true;
-        }
-        if (isAction == false) {
-            //console.log("cc");
-            this.walk();
-        }
-        */
-        this.thinkRand();
     }
 
-    async thinkRand() {
-        var eye = this.watch();
-        var d = Main.getRand(1, 4);
-        var ds: string = "n";
-        if (d == 1) {
-            ds = "n";
-        } else if (d == 2) {
-            ds = "s";
-        } else if (d == 3) {
-            ds = "w";
-        } else if (d == 4) {
-            ds = "e";
-        }
-        this.act(ds);
-    }
-
-    async thinkLLM() {
-        var eye = this.watch();
-        //進む方向を返す
-        var d = await Agent.getNPCAction("[1,1,1,1,1]");
-        this.act(d);
-    }
-
-    act(ds: string) {
-        //報告に何があるのかを検知する
+    act(ds: string, scene: Scene) {
+        //方向に何があるのかを検知する
         var d2 = this.watchDirection(ds);
-        if (this.setMethod(d2) == false) {
-            this.walk();
-        }
 
-        /*
-        if (this.isCreateObject == true && Score.TREE_AMOUNT >= 100) {
+        //方向にPersonやItemがあった場合は動かずにアクションをする
+        if (this.setMethod(d2) == true) {
+
+        } else if (this.isCreateObject == true && Score.TREE_AMOUNT >= 100) {
+            //建築する
             this.build(scene, this.col, this.row);
-            //console.log("bb");
-            isAction = true;
-        }
-        if (isAction == false) {
-            //console.log("cc");
+        } else {
+            //方向に動く
             this.walk();
-        }*/
-
-
+        }
     }
 
     getItem(i: Item.Item): boolean {

@@ -39,13 +39,13 @@ import * as Item from './item.ts';
 import * as NPC from './npc.ts';
 import * as Score from './score.ts';
 
+export var LLM_FLAG = 0;
 export var MAP_SIZE = 30;
-export var NPC_COUNT = 20;
-export var ENEMY_COUNT = 30;
-export var ITEM_COUNT = 20;
+export var NPC_COUNT = 3;
+export var ENEMY_COUNT = 5;
+export var ITEM_COUNT = 0;
 export var MAP_ARRAY: any[] = [];
 export var meshArray: { dispose: () => void; }[] | AbstractMesh[] = [];
-//export var boxArray: AbstractMesh[] = [];
 
 export var chipArray: {
   mesh: any;
@@ -132,6 +132,8 @@ const main = async () => {
   var stepId = 0;
   var hogeId = 0;
   setInterval(function () {
+
+
     var humanCount = 0;
     var enemyCount = 0;
     for (var j = 0; j < persons.length; j++) {
@@ -141,15 +143,17 @@ const main = async () => {
       if (persons[j].type != 1) {
         enemyCount++;
       }
+
       //if (stepId == persons[j].tickId) {
       //特定のtickの時だけ呼び出す
       persons[j].thinkAndAct(scene);
-      //}
+      // }
       if (persons[j].hp < 0) {
         persons[j].remove();
         persons[j].mesh?.dispose();
         persons.splice(j, 1);
       }
+
     }
 
     for (var j = 0; j < Item.items.length; j++) {
@@ -161,20 +165,17 @@ const main = async () => {
     }
     stepId++;
     hogeId++;
-    //if (stepId > 15) {
-    //picker.setPickingList(null);
+    //if (stepId > 30) {
+    //stepId = 0;
+    Map.growMap(scene);
+    Score.setPopulation(humanCount);
+    Score.setAnimalCount(enemyCount);
+    var text = Score.getScoreText();
+    scoreBlock.text = text;
     //}
-    if (stepId > 30) {
-      stepId = 0;
-      Map.growMap(scene);
-      Score.setPopulation(humanCount);
-      Score.setAnimalCount(enemyCount);
-      var text = Score.getScoreText();
-      scoreBlock.text = text;
-      //picker.setPickingList(boxArray);
-      //picker.setPickingList(spheres);
-    }
-  }, 30 * 10);
+
+
+  }, 150);
 
   // Run render loop
   babylonEngine.runRenderLoop(() => {
@@ -194,6 +195,9 @@ var mapid = 1;
 function resetMap(scene: Scene) {
   for (var i = 0; i < meshArray.length; i++) {
     meshArray[i].dispose();
+  }
+  for (var i = 0; i < chipArray.length; i++) {
+    chipArray[i].mesh.dispose();
   }
   meshArray = [];
   persons = [];

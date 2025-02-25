@@ -65,6 +65,8 @@ export function addBox(type: number, bid: number, col: number, row: number, scen
     box.position.z = row;
     box.name = "xxxxx" + col;
     box.position.y = objectHight / 2;
+    Main.meshArray.push(box);
+
     const b = {
         bid: bid,
         type: type,
@@ -123,19 +125,20 @@ export function addBox(type: number, bid: number, col: number, row: number, scen
 
 export function growMap(scene: Scene) {
 
+    /*
     if (Score.FOOD_AMOUNT >= 100) {
         Score.updateFoodAmount(-100);
         Npc.createNPC(scene, 1);
     }
-
-    /*
-        var r = Main.getRand(1, Main.chipArray.length);
-        var a = Main.chipArray[r];
-        var c = a.col;
-        var r = a.row;
-        a.mesh.dispose();
-        Main.chipArray.splice(r, 1);
-        var h = Main.getRand(1, 8)
-        addBox(h, 1, c, r, scene)
     */
+
+    var r = Main.getRand(1, Main.chipArray.length);
+    var a = Main.chipArray[r];
+    var c = a.col;
+    var r = a.row;
+    a.mesh.dispose();
+    Main.chipArray.splice(r, 1);
+    var h = Main.getRand(1, 8)
+    addBox(h, 1, c, r, scene)
+
 }
